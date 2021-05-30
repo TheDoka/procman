@@ -1,0 +1,94 @@
+  /* Text enhancements */
+  html, html a {
+    -webkit-font-smoothing: antialiased !important;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.004);
+}
+
+body{
+    background-color: black;
+    position: relative;
+    font-family: 'Montserrat', sans-serif, bold;
+}
+
+#sidenav, #main{
+    width: 50%;
+    height: 100%;
+    max-width: 50%;
+    position: absolute;
+    color: white;
+}
+
+#main { 
+    left: 50%;
+    background-color: #161616;
+    height: 100%;
+}
+
+#sidenav { 
+    background-color: #ffa69e;
+    background-image: linear-gradient(315deg, #ffa69e 0%, #5d4954 74%);
+}
+
+#headerTitleText{
+    text-align: center;
+    margin-top: 30vh;
+    transform: translateY(-30%); 
+    font-size: 80;
+    font-weight: 600;
+    width: 100%;
+    position: absolute;
+    z-index: 1;
+    
+}
+.lowerHeaderText{
+    font-size: 42;
+    font-weight: 400;
+    margin-top: -5%;
+}
+
+.shadowyText{
+
+    
+}
+#hearthPlanet{
+    width: 75%;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    position: absolute;
+
+}
+
+.form-dark:-webkit-autofill, 
+.form-dark:active,
+.form-dark:focus,
+.form-dark{
+    background-color: black !important;
+    width: 100%;
+    line-height: 1.5;
+    padding: 15px 10px;
+    border: 1px solid var(--borderFormEls);
+    color: var(--white);
+    background: var(--bgFormEls);
+    transition: background-color 0.3s cubic-bezier(0.57, 0.21, 0.69, 1.25), transform 0.3s cubic-bezier(0.57, 0.21, 0.69, 1.25);
+
+}
+
+.login-form{
+    width: 50%;
+    margin: auto;
+    margin-top: 50vh;
+    transform: translateY(-50%); 
+}
+
+#lockimg{
+    width: 30%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding-bottom: 20px;
+}
+
+img, svg{
+    pointer-events: none;
+}

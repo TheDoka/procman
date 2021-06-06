@@ -19,11 +19,20 @@
         case  'newProc': 
           echo json_encode(newProc($_POST['title'], $_POST['sheet']));
         break;
+        case  'giveSheetUserRole': 
+          echo giveSheetUserRole($_POST['sheet'], $_POST['user'], $_POST['role']);
+        break;
         case  'getProc': 
           echo json_encode(getProc($_POST['sheetID'], $_POST['version']));
         break;
         case  'deleteVersion': 
           echo json_encode(deleteVersion($_POST['sheetID'], $_POST['version']));
+        break;
+        case  'getAllCategories': 
+          echo json_encode(getAllCategories());
+        break;
+        case  'deleteSheet': 
+          echo json_encode(deleteSheet($_POST['sheetID']));
         break;
         case  'getSheetsTitleForUser': 
           echo json_encode(getSheetsTitleForUser($_POST['userID']));
@@ -40,11 +49,47 @@
         case  'getCategories': 
           echo json_encode(getCategories());
         break;
+        case  'getCategoriesSheet': 
+          echo json_encode(getCategoriesSheet($_POST['sheetID']));
+        break;
         case  'getSheetByCategory': 
           echo json_encode(getSheetByCategory($_POST['category']));
         break;
+        case  'getSheetByCategoryForUser': 
+          echo json_encode(getSheetByCategoryForUser($_POST['category'], $_POST['user']));
+        break; 
+        case  'addNewCategory': 
+          echo json_encode(addNewCategory($_POST['sheetID'], $_POST['cid']));
+        break;
+        case  'getRightsOverSheet': 
+          echo json_encode(getRightsOverSheet($_POST['token'], $_POST['sheetID']));
+        break;
+        case  'getListOfAccessSheet': 
+          echo json_encode(getListOfAccessSheet($_POST['sheetID']));
+        break;
+        case  'getRoles': 
+          echo json_encode(getRoles());
+        break; 
+        case  'revokeRight': 
+          echo json_encode(revokeRight($_POST['sheetID'], $_POST['userID']));
+        break; 
+        case  'revokeCategory': 
+          echo json_encode(revokeCategory($_POST['sheetID'], $_POST['cid']));
+        break; 
+        case  'updateRole': 
+          echo json_encode(updateRole($_POST['role']));
+        break;
+        case  'newRole': 
+          echo json_encode(newRole($_POST['role']));
+        break;
+        case  'deleteRole': 
+          echo json_encode(deleteRole($_POST['rid']));
+        break;
+        case  'getUsersName': 
+          echo json_encode(getUsersName());
+        break;
         case  'upload': 
-          echo upload();
+          //echo upload();
         break;
 
       }
@@ -143,6 +188,31 @@ function updateUser($user)
   return $cursor->errorInfo()[2];
 }
 
+function updateRole($role)
+{
+
+  $PDO = createPDO();
+
+  $req = "UPDATE `role` SET 
+         `name` = :name, 
+         `canRead` = :canRead, 
+         `canWrite` = :canWrite, 
+         `canDelete` = :canDelete,
+         `canShare` = :canShare
+         WHERE `id` = :id";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute(array(
+                        ':id'        => $role['id'],
+                        ':name'      => $role['name'],
+                        ':canRead'   => $role['canRead'],
+                        ':canWrite'  => $role['canWrite'],
+                        ':canDelete' => $role['canDelete'],
+                        ':canShare'  => $role['canShare']
+                    ));
+  return $cursor->errorInfo()[2];
+}
+
 function loginUUID()
 {
   return uniqid('mor');
@@ -161,7 +231,7 @@ function updateProc($id, $title, $content)
           ($id, '$title', '$content', '2021-03-03 17:45:36', $nextVersion)";
 
   $cursor = $PDO->prepare($req);
-  $cursor ->execute($proc);
+  $cursor ->execute();
   $cursor = null;
 
   return true;
@@ -188,6 +258,37 @@ function newProc($title, $content)
 
   $cursor = null;
   return $sheetID[0];
+}
+
+function deleteSheet($sheetID)
+{
+  $PDO = createPDO();
+
+    $req  ="DELETE SC, SA, S FROM sheet  S
+
+            LEFT JOIN sheet_category SC 
+            ON SC.sheet = S.id 
+            
+            LEFT JOIN sheet_access SA 
+            ON SA.sheet = S.id
+            
+            WHERE S.id = $sheetID";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+  
+}
+
+function giveSheetUserRole($sheet, $user, $role)
+{
+  $PDO = createPDO();
+
+  $req  = "INSERT INTO `sheet_access` (`sheet`, `user`, `role`) 
+           VALUES ('$sheet', '$user', '$role');";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+  return $cursor->errorInfo()[2];
 }
 
 function getProc($sheetID, $version)
@@ -264,11 +365,63 @@ function deleteVersion($sheetID, $version)
   $cursor = $PDO->prepare($req);
   $cursor ->execute();
 
-  $sheet = $cursor->fetch();
   $cursor = null;
 
   return true;
 
+}
+
+function addNewCategory($sheetID, $cid)
+{
+
+  $PDO = createPDO();
+
+  $req = "INSERT INTO `sheet_category` (`id`, `sheet`, `category`) VALUES (NULL, '$sheetID', '$cid')";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  $cursor = null;
+
+  return true;
+
+}
+
+function deleteRole($rid)
+{
+
+  $PDO = createPDO();
+
+  $req = "DELETE FROM role
+          WHERE id = $rid";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  $cursor = null;
+
+  return true;
+
+}
+
+function newRole($role)
+{
+
+  $PDO = createPDO();
+
+  $a = $role['name'];
+  $b = $role['canRead'];
+  $c = $role['canWrite'];
+  $d = $role['canDelete'];
+  $e = $role['canShare'];
+
+  $req = "INSERT INTO `role` VALUES 
+  (NULL, '$a', '$b','$c', '$d', '$e', '0')";
+
+$cursor = $PDO->prepare($req);
+$cursor ->execute();
+
+  $cursor = null;
 }
 
 function getCategories()
@@ -295,6 +448,38 @@ function getCategories()
 
 }
 
+
+function getCategoriesSheet($sheetID)
+{
+  $PDO = createPDO();
+
+  $req = "SELECT C.* FROM sheet_category SC
+
+          INNER JOIN category C
+          ON C.id = SC.category 
+
+          WHERE SC.sheet = $sheetID
+        ";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  return $cursor->fetchAll(PDO::FETCH_ASSOC);
+
+}
+
+function getAllCategories()
+{
+  $PDO = createPDO();
+
+  $req = "SELECT * FROM category";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  return $cursor->fetchAll(PDO::FETCH_ASSOC);
+
+}
 function getSheetByCategory($category)
 {
   $PDO = createPDO();
@@ -306,6 +491,34 @@ function getSheetByCategory($category)
           ON SC.sheet = S.id
           
           WHERE SC.category = $category and S.version = (SELECT max(version) FROM sheet t2 WHERE t2.id = S.id)
+          GROUP BY S.id
+        ";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  return $cursor->fetchAll(PDO::FETCH_ASSOC);
+
+}
+
+function getSheetByCategoryForUser($category, $user)
+{
+  $PDO = createPDO();
+
+  $req = "SELECT DISTINCT S.*
+          FROM sheet S
+          
+          INNER JOIN sheet_category SC
+          ON SC.category = $category
+
+          INNER JOIN sheet_access SH
+          ON SH.sheet = S.id
+          
+          INNER JOIN role R
+          ON R.id = SH.role
+        
+          WHERE SH.user = $user AND R.canRead = true AND S.version = (SELECT max(version) FROM sheet t2 WHERE t2.id = S.id)
+        
           GROUP BY S.id
         ";
 
@@ -340,6 +553,99 @@ function getSubcategory($PDO, $category)
   
   return $cursor->fetchAll(PDO::FETCH_ASSOC);
 }
+
+function getRightsOverSheet($userToken, $sheetID)
+{
+  $PDO = createPDO();
+
+  $req = "SELECT R.* FROM sheet_access S
+
+          INNER JOIN role R
+          ON R.id = S.role
+
+          INNER JOIN user U 
+          ON U.id = S.user
+
+          WHERE S.sheet = $sheetID AND U.token = '$userToken'
+        ";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  return $cursor->fetchAll(PDO::FETCH_ASSOC);
+
+}
+
+function getListOfAccessSheet($sheetID)
+{
+  $PDO = createPDO();
+
+  $req = "SELECT U.username, U.id as uid, R.*, R.id as rid, R.name as roleName
+          FROM sheet_access SH
+          
+          INNER JOIN user U
+          ON U.id = SH.user
+
+          INNER JOIN role R
+          ON R.id = SH.role
+
+          WHERE SH.sheet = $sheetID";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  return $cursor->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+function revokeRight($sheetID, $userID)
+{
+  $PDO = createPDO();
+
+  $req = "DELETE FROM sheet_access 
+          WHERE sheet = $sheetID AND user = ${userID}";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+}
+
+function revokeCategory($sheetID, $cid)
+{
+  $PDO = createPDO();
+
+  $req = "DELETE FROM sheet_category 
+          WHERE sheet = $sheetID AND category = ${cid}";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+}
+
+function getRoles()
+{
+  $PDO = createPDO();
+
+  $req = "SELECT * FROM role";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  return $cursor->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getUsersName()
+{
+  $PDO = createPDO();
+
+  $req = "SELECT id, username FROM user";
+
+  $cursor = $PDO->prepare($req);
+  $cursor ->execute();
+
+  return $cursor->fetchAll(PDO::FETCH_ASSOC);
+}
+
 
 function uploadFile($sheetID, $content)
 {

@@ -4,12 +4,22 @@
     var currentProc;
     var currentVersion;
 
+    var roles;
+    var usersName;
+    var categories;
+    var allCategories;
+
     function init()
     {
         makeEditor({});
+        this.categories = getCategories();
+        this.allCategories = getAllCategories();
         categoryList();
         setupAutoCompleteOnSearch(); 
- 
+
+        this.roles = getRoles();
+        this.usersName = getUsersName();
+
         $('#username').text(currentUser['username'].toUpperCase());
     }
 
@@ -49,9 +59,343 @@
                 currentProc    = mapping[ui.item.label];
                 updateComboVersion();
                 makeEditor(getProc(currentProc, currentVersion));  
+                showOptionsByRights();
+                populateSharesTable();
+                populateCategoryTable();
+
             }
         });
     }
+
+    function getRightsOverCurrentSheet()
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'getRightsOverSheet',
+                token: currentUser.token,
+                sheetID: currentProc
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+
+    function getListOfAccessSheet()
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'getListOfAccessSheet',
+                sheetID: currentProc
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+                console.log(rdata);
+            },
+        });
+        return rdata;
+    }
+    function getUsersName()
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'getUsersName'
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+    
+    function populateSharesTable()
+    {
+        let dra = "";
+        console.log(currentUser.id);
+        $('#sheetSharedTable > tr').remove(); 
+        getListOfAccessSheet().forEach(user => {
+
+                    dra += `<tr id="rr${user.uid}">
+                            <td>${user.username}</td>
+                            <td>${user.roleName}</td>
+                            <td>
+                                ${user.id != currentUser.id ? 
+                                    `<button id="${user.uid}" type="button" class="btn btn-secondary revokeRight">Revoke</button>` 
+                                    :
+                                    ""
+                                }
+                            </td>
+                    </tr>`
+        });
+
+        dra += `<tr>
+                    <td colspan=3><button style="width: 100%;" id="newRight" type="button" class="btn btn-dark">+</button></td>
+                </tr>`
+                
+        $('#sheetSharedTable > tbody').after(dra);
+    }
+
+
+    function getCategoriesSheet()
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'getCategoriesSheet',
+                sheetID: currentProc
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+
+    function revokeCategory(sheetID, cid)
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'revokeCategory',
+                sheetID: currentProc,
+                cid: cid
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+
+    function populateCategoryTable()
+    {
+        let dra = "";
+
+        $('#sheetCategoriesTable > tr').remove(); 
+        getCategoriesSheet().forEach(category => {
+
+                    dra += `<tr id="rr${category.id}">
+                            <td>${category.name}</td>
+                            <td>
+                            <button style="width: 100%;" type="button" id="${category.id}" class="btn btn-danger revokeCategory">-</button>
+                            </td>
+                            <td></td>
+                    </tr>`
+        });
+
+        dra += `<tr>
+                    <td colspan=3><button style="width: 100%;" id="newCategory" type="button" class="btn btn-dark">+</button></td>
+                </tr>`
+
+        $('#sheetCategoriesTable > tbody').after(dra);
+    }
+
+    function updateRole(role)
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'updateRole',
+                role: role
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+   
+    function addNewCategory(sheetID, cid)
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'addNewCategory',
+                sheetID,
+                cid: cid
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+
+
+    function deleteRole(rid)
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'deleteRole',
+                rid: rid
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+    
+    function newRole(role)
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'newRole',
+                role: role
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+
+    function selectRole()
+    {
+        let select = `<select class="form-select roleSelect">`
+        roles.forEach(role => {
+            select += `<option value="${role.id}">${role.name}</option>`
+        });
+        return select + "</select>";
+    }
+    
+
+    function getAllCategories()
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'getAllCategories'
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+
+    function selectCategory()
+    {
+        let select = `<select class="form-select categorySelect">`
+        
+        allCategories.forEach(category => {
+    
+            select += `<option value="${category.id}">${category.name}</option>`
+
+        });
+
+        return select + "</select>";
+    }
+
+    function selectUser()
+    {
+        let select = `<select class="form-select userSelect">`
+        usersName.forEach(user => {
+            select += `<option value="${user.id}">${user.username}</option>`
+        });
+        return select + "</select>";
+    }
+
+    function getRoles()
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'getRoles',
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+
+    function revokeRight(sheetID, userID)
+    {
+        let rdata = [];
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'revokeRight',
+                sheetID: sheetID,
+                userID: userID,
+            },success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+    }
+
+    function showOptionsByRights()
+    {
+        let role = getRightsOverCurrentSheet()[0];
+        $('#infoProc').show();
+        $('#deleteVersion').hide();
+        $('#updateProc').hide();
+        $('#shareProc').hide();
+        $('#categoryProc').hide();
+        
+        if (role.canDelete == 1)
+        {
+            $('#deleteVersion').show();
+        }
+        if (role.canWrite == 1)
+        {
+            $('#updateProc').show();
+        }
+        if (role.canShare == 1)
+        {
+            $('#shareProc').show();
+        }
+        if (role.canCategory == 1)
+        {
+            $('#categoryProc').show();
+        }
+        console.log(role);
+    }
+   
 
     function updateComboVersion()
     {
@@ -68,6 +412,7 @@
 
     
     }
+
 
     function getProc(sheetID, version)
     {
@@ -113,6 +458,26 @@
         return rdata;
     }
 
+    function deleteSheet(sheetID)
+    {
+        var rdata;
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'deleteSheet',
+                sheetID: sheetID,
+            },
+            success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+
+        return rdata;
+    }
+
     function newProc(title, callback)
     {
 
@@ -133,6 +498,39 @@
             console.log('Saving failed: ', error)
         });   
 
+    }
+    
+    function giveSheetUserRole(sheet, user, role)
+    {
+
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'giveSheetUserRole',
+                sheet: sheet,
+                user: user,
+                role: role,
+            },
+            success: function(data)
+            {
+                console.log(data);
+            },
+        });
+
+    }
+
+    function giveRole(sheet, user, role)
+    {
+        let idRole = 1;
+        switch(role)
+        {
+            case "owner":   idRole = 1; break;
+            case "viewer":  idRole = 2; break;
+            case "editor":  idRole = 3; break;
+        }
+        giveSheetUserRole(sheet, user, idRole);
     }
 
     function makeEditor(sheetContent)
@@ -309,6 +707,9 @@
 
     function deleteVersion(version, callback)
     {
+        console.log(currentProc);
+        console.log(version)
+
         $.post('assets/php/interface.php',
         {
             function: 'deleteVersion',
@@ -322,29 +723,38 @@
 
     function getCategories(callback)
     {
-        $.post('assets/php/interface.php',
-        {
-            function: 'getCategories',
-        }, function(data) {
-            data = JSON.parse(data);
-            callback(data);
+        
+        var rdata;
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'getCategories'
+            },
+            success: function(data)
+            {         
+                rdata = JSON.parse(data);
+            },
         });
+        return rdata;
+        
     }
 
     function categoryList()
     {
         let lvl = 0;
-        getCategories(function (data) {
-            data.forEach(block => {
-                $('#catProcExplorer').append(
-                    buildHeaderBlock(lvl, 
-                                    block['name'], 
-                                    getRecursiveChildBlock(block, lvl)
-                                    )
-                );
-                lvl++; 
-            });
+
+        categories.forEach(block => {
+            $('#catProcExplorer').append(
+                buildHeaderBlock(lvl, 
+                                block['name'], 
+                                getRecursiveChildBlock(block, lvl)
+                                )
+            );
+            lvl++; 
         });
+  
         
     }
 
@@ -353,7 +763,7 @@
 
         var blocks = "";
         var sheetsBlock = "";
-        var sheets =  getSheetByCategory(block['id'])
+        var sheets =  getSheetByCategoryForUser(block['id'], currentUser['id'])
         if (sheets.length > 0)
         {
             sheets.forEach(sheet => {
@@ -374,7 +784,7 @@
                     // Last child of the tree
 
                     sheetsBlock = "";
-                    sheets =  getSheetByCategory(childBlock['id'])
+                    sheets =  getSheetByCategoryForUser(childBlock['id'], currentUser['id'])
                     if (sheets.length > 0)
                     {
                         sheets.forEach(sheet => {
@@ -416,7 +826,7 @@
             } else {
 
                 var sheetsBlock = "";
-                let sheets =  getSheetByCategory(childBlock['id'])
+                let sheets =  getSheetByCategoryForUser(childBlock['id'], currentUser['id'])
                 if (sheets.length > 0)
                 {
                     sheets.forEach(sheet => {
@@ -474,6 +884,27 @@
             data: {
                 function: 'getSheetByCategory',
                 category: category
+            },
+            success: function(data)
+            {
+                rdata = JSON.parse(data);
+            },
+        });
+        return rdata;
+ 
+    }
+    
+    function getSheetByCategoryForUser(category, userID)
+    {
+        var rdata;
+        $.ajax({
+            type: 'POST',
+            url: 'assets/php/interface.php',
+            async: false,
+            data: {
+                function: 'getSheetByCategoryForUser',
+                category: category,
+                user: userID
             },
             success: function(data)
             {

@@ -77,16 +77,13 @@ body{
   font-weight: bold;
   bottom: -5px;
 }
-#deleteVersion{
-  color: #bd9fd7;
-  font-weight: bold;
-  font-size: 40;
-}
 
-#updateProc{
+
+#shareProc, #categoryProc, #updateProc, #deleteVersion{
   color: #bd9fd7;
   font-weight: bold;
   font-size: 40;
+  display:none;
 }
 #newProc, #logout{
   color: #bd9fd7;
@@ -179,6 +176,7 @@ body{
   position: absolute;
   right: 0px;
   opacity: 50%;
+  display: none;
 }
 
 #actionBox{
@@ -186,6 +184,7 @@ body{
   bottom: 0px;
   right: 0px;
 }
+
 
 .codex-editor__redactor{
   height: 100%;
